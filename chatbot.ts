@@ -16,7 +16,7 @@ import * as readline from "readline";
 import { moonshotActionProvider } from "./moonshot/moonshotActionProvider";
 import express from 'express';
 import bodyParser from 'body-parser';
-import { loginUser, registerUser } from "./data/db";
+import { getAllTokens, getTokenById, loginUser, registerUser } from "./data/db";
 import jwt from "jsonwebtoken";
 
 dotenv.config();
@@ -277,7 +277,7 @@ async function main() {
                 res.json({ response: chunk.agent.messages[0].content })
               }
             } else if ("tools" in chunk) {
-            
+
             }
           }
 
@@ -314,6 +314,32 @@ async function main() {
         res.json({ message: 'Login successful', token });
       } catch (error) {
         res.status(401).json({ error: 'Invalid username or password' });
+      }
+    });
+
+    app.get('/api/tokens/:id', async (req, res) => {
+      const tokenId = parseInt(req.params.id, 10); // Get the ID from the URL parameter
+
+      try {
+        const token = await getTokenById(tokenId);
+        if (token) {
+          res.json(token); // Return the found token
+        } else {
+          res.status(404).json({ error: 'Token not found' }); // Return 404 if not found
+        }
+      } catch (error) {
+        console.error('Error fetching the token:', error);
+        res.status(500).json({ error: 'Internal server error' }); // Return 500 in case of error
+      }
+    });
+
+    app.get('/api/tokens', async (req, res) => {
+      try {
+        const tokens = await getAllTokens();
+        res.json(tokens); // Return all tokens
+      } catch (error) {
+        console.error('Error fetching all tokens:', error);
+        res.status(500).json({ error: 'Internal server error' }); // Return 500 in case of error
       }
     });
 

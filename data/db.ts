@@ -145,7 +145,36 @@ export const findTokenByParameter = async (searchTerm: string) => {
     }
 };
 
+// Function to find a token by id
+export const getTokenById = async (id: number) => {
+    const query = `
+        SELECT * FROM tokens 
+        WHERE id = $1;
+    `;
 
+    try {
+        const res = await pool.query(query, [id]);
+        return res.rows.length > 0 ? res.rows[0] : null; // Retorna el token encontrado o null
+    } catch (error) {
+        console.error("Error buscando token por ID:", error);
+        throw error; // Lanza el error para que sea manejado por el llamador
+    }
+};
+
+// Function to obtain all tokens
+export const getAllTokens = async () => {
+    const query = `
+        SELECT * FROM tokens;
+    `;
+
+    try {
+        const res = await pool.query(query);
+        return res.rows; // Retorna todos los tokens
+    } catch (error) {
+        console.error("Error obteniendo todos los tokens:", error);
+        throw error; // Lanza el error para que sea manejado por el llamador
+    }
+};
 
 // Initialize the database when the module is loaded
 initializeDatabase();
