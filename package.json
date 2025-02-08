@@ -20,7 +20,7 @@
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
     "@wen-moon-ser/moonshot-sdk-evm": "^0.2.2",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
     "ethers": "^6.13.5",
     "express": "^4.21.2",

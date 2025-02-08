@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { CreateSchema, EvaluatorSchema, UserSchema } from "./schemas";
+import { CreateSchema, EvaluatorSchema, TokenSearchTermSchema, UserSchema } from "./schemas";
 import { Environment, MigrationDex, MintTokenCurveType, Moonshot, Network } from "@wen-moon-ser/moonshot-sdk-evm";
 import { formatEther, JsonRpcProvider, Transaction, Wallet } from "ethers";
 import { customActionProvider, EvmWalletProvider } from "@coinbase/agentkit";
-import { createToken, createWallet, getWalletByUserId } from "../data/db";
+import { createToken, createWallet, findTokenByParameter, getWalletByUserId } from "../data/db";
 import { postTweet } from "../data/twitter";
 
 export const moonshotActionProvider = customActionProvider([{
@@ -251,6 +251,33 @@ export const moonshotActionProvider = customActionProvider([{
         }
     
         return `The balance in eth for his walletAddress ${walletAddress} is ${balance} $ETH`
+    }
+}, {
+    name: "search_token",
+    description: `
+        This tool will search a token in the tokens db and will return information about it.
+
+        It takes the following input:
+        searchTerm: just one word from the message which will be the word to search.
+    `,
+    schema: TokenSearchTermSchema,
+    invoke: async (args: z.infer<typeof TokenSearchTermSchema>) => {
+        const token = await findTokenByParameter(args.searchTerm);
+
+        if (token) {
+            return `
+                Well, you have found the token, here is the information of it that you have found in the database:
+
+                ${token}
+
+                Now respond the user based on this information. If the user asked you something specific, then just answer that specific.
+                If you just detect a general ask of the token, then give him a wrap of this information. Sound natural and clear.
+            `
+        } else {
+            return `
+                You have searched but you have found no token, so just tell the user that you are not able to find information about this token.
+            `
+        }
     }
 }
 ])

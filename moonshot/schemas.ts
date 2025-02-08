@@ -42,5 +42,12 @@ export const UserSchema = z
     .strip()
     .describe("Schema for user ID");
 
+export const TokenSearchTermSchema = z
+    .object({
+        searchTerm: z.string().describe("A single word from the message to search for"),
+    })
+    .strip()
+    .describe("Schema for token search term");
+
 
 

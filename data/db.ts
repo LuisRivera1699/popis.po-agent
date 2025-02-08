@@ -1,14 +1,14 @@
 // db.js
 import { Pool } from 'pg';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 // Configure the connection to the database
 const pool = new Pool({
     user: 'postgres', // Replace with your PostgreSQL username
-    host: 'localhost',      // Change if your database is on another host
-    database: 'xisk99', // Replace with the name of your database
-    password: '', // Replace with your password
+    host: 'agentt.c4nhdkfa7fvy.us-east-2.rds.amazonaws.com',      // Change if your database is on another host
+    database: 'postgres', // Replace with the name of your database
+    password: 'Xxzzzxx123_1', // Replace with your password
     port: 5432,             // The default port for PostgreSQL
 });
 
@@ -125,6 +125,23 @@ export const getWalletByUserId = async (userId) => {
     } catch (error) {
         console.error("Error retrieving wallet:", error);
         throw error; // Throw the error to be handled by the caller
+    }
+};
+
+// Function to find a token by parameter
+export const findTokenByParameter = async (searchTerm: string) => {
+    const query = `
+        SELECT * FROM tokens 
+        WHERE name = $1 OR symbol = $1 OR contract_address = $1
+        LIMIT 1;
+    `;
+
+    try {
+        const res = await pool.query(query, [searchTerm]);
+        return res.rows.length > 0 ? res.rows[0] : null; // Retorna el primer registro encontrado o null
+    } catch (error) {
+        console.error("Error buscando token:", error);
+        throw error; // Lanza el error para que sea manejado por el llamador
     }
 };
 
