@@ -49,5 +49,12 @@ export const TokenSearchTermSchema = z
     .strip()
     .describe("Schema for token search term");
 
-
+export const UserSendBalanceSchema = z
+    .object({
+        userId: z.number().describe("The user's ID"),
+        balance: z.number().describe("How much balance the user wants to send"),
+        addressTo: z.string().describe("The EVM wallet address the user wants to send eth balance to"),
+    })
+    .strip()
+    .describe("Schema for user ID and Ethereum wallet address to send balance");
 
