@@ -1,0 +1,37 @@
+{
+  "name": "@coinbase/cdp-langchain-chatbot-example",
+  "description": "CDP Agentkit Node.js SDK Chatbot Example",
+  "version": "1.0.0",
+  "author": "Coinbase Inc.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "NODE_OPTIONS='--no-warnings' ts-node ./chatbot.ts",
+    "dev": "nodemon ./chatbot.ts",
+    "lint": "eslint -c .eslintrc.json *.ts",
+    "lint:fix": "eslint -c .eslintrc.json *.ts --fix",
+    "format": "prettier --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "^0.1.0",
+    "@coinbase/agentkit-langchain": "^0.1.0",
+    "@langchain/anthropic": "^0.3.13",
+    "@langchain/core": "^0.3.19",
+    "@langchain/langgraph": "^0.2.21",
+    "@langchain/openai": "^0.3.14",
+    "@wen-moon-ser/moonshot-sdk-evm": "^0.2.2",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "md5": "^2.3.0",
+    "pg": "^8.13.1",
+    "twitter-api-v2": "^1.19.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2"
+  }
+}
