@@ -18,6 +18,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { getAllTokens, getTokenById, loginUser, registerUser } from "./data/db";
 import jwt from "jsonwebtoken";
+import cors from 'cors';
 
 dotenv.config();
 
@@ -149,6 +150,7 @@ async function main() {
     const { agent, config } = await initializeAgent();
 
     const app = express();
+    app.use(cors());
     const PORT = process.env.PORT || 3000;
 
     app.use(bodyParser.json());
