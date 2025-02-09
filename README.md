@@ -12,6 +12,40 @@ The blockchain world is living the **meme phenomenon**—every viral event turns
 
 ---
 
+## Getting Started
+
+### Install Dependencies
+```sh
+npm install
+```
+
+### Run the Agent
+```sh
+npm run start
+```
+
+### Configure Environment Variables
+Create a `.env` file in the root directory and add the following variables:
+```env
+OPENAI_API_KEY=
+CDP_API_KEY_NAME=
+CDP_API_KEY_PRIVATE_KEY=
+ANTHROPIC_API_KEY=
+RPC_URL=https://base-sepolia-rpc.publicnode.com
+AGENT_WALLET_PRIVATE_KEY=
+PORT=3000
+BEARER_TOKEN=
+API_KEY=
+API_SECRET=
+ACCESS_TOKEN=
+ACCESS_SECRET=
+CLIENT_ID=
+CLIENT_SECRET=
+JWT_SECRET=
+```
+
+---
+
 ## How It Works 🛠️
 
 1. **Scraping Twitter** 🕵️‍♂️ - pochi.po constantly monitors **nitter.net** for new tweets.
@@ -103,4 +137,3 @@ PRs welcome! If you have cool ideas, feel free to open an issue or hit us up on 
 
 ## License 📜
 MIT - Do whatever you want, just don’t rug. 😉
-
