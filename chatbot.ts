@@ -150,7 +150,11 @@ async function main() {
     const { agent, config } = await initializeAgent();
 
     const app = express();
-    app.use(cors());
+    app.use(cors({
+      origin: '*', // Permitir todas las solicitudes
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
+      allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
+  }));
     const PORT = process.env.PORT || 3000;
 
     app.use(bodyParser.json());
@@ -244,13 +248,14 @@ async function main() {
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1]; // Get the token from the Authorization header
 
+      console.log(req);
+
       if (!token) {
-        return res.status(401).json({ error: 'Authorization token is required' });
+        return res.json({ response: 'Authorization token is required' });
       }
 
       try {
         // Verify the token
-
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const { message } = req.body;
 
@@ -291,7 +296,7 @@ async function main() {
 
       } catch (error) {
         console.error("Error verifying token:", error);
-        res.status(403).json({ error: 'Invalid or expired token' });
+        res.json({ response: 'Invalid or expired token' });
       }
     })
 
