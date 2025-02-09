@@ -90,6 +90,12 @@ https://autonome.alt.technology/pochi-po-ljtoie)
 
 ---
 
+## Authors
+- [Diego Parra](https://github.com/divait)
+- [Luis Rivera](https://github.com/LuisRivera1699)
+
+---
+
 ## Contributing 🛠️
 PRs welcome! If you have cool ideas, feel free to open an issue or hit us up on Twitter.
 
