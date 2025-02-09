@@ -153,7 +153,7 @@ async function main() {
     app.use(cors({
       origin: '*', // Permitir todas las solicitudes
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
-      allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
+      allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin'], // Encabezados permitidos
   }));
     const PORT = process.env.PORT || 3000;
 
