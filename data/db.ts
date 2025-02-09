@@ -40,11 +40,18 @@ const initializeDatabase = async () => {
             wallet_address VARCHAR(255) NOT NULL
         );`;
 
+    const createSnipersTableQuery = `
+        CREATE TABLE IF NOT EXISTS snipers (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+            amount DECIMAL NOT NULL
+        );`;
+
     try {
         await pool.query(createTokensTableQuery);
         await pool.query(createUsersTableQuery);
         await pool.query(createWalletsTableQuery);
-        console.log("Table 'tokens' is ready.");
+        await pool.query(createSnipersTableQuery);
     } catch (error) {
         console.error("Error creating table:", error);
     }
@@ -91,7 +98,7 @@ export const loginUser = async (username, password) => {
         const user = result.rows[0];
 
         if (user && await bcrypt.compare(password, user.password)) {
-            const token = jwt.sign({id: user.id, username: user.username}, process.env.JWT_SECRET, {expiresIn: '1h'})
+            const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' })
             return token; // Return the user object if login is successful
         } else {
             throw new Error('Invalid username or password');
@@ -138,10 +145,10 @@ export const findTokenByParameter = async (searchTerm: string) => {
 
     try {
         const res = await pool.query(query, [searchTerm]);
-        return res.rows.length > 0 ? res.rows[0] : null; // Retorna el primer registro encontrado o null
+        return res.rows.length > 0 ? res.rows[0] : null; // Return the first found record or null
     } catch (error) {
-        console.error("Error buscando token:", error);
-        throw error; // Lanza el error para que sea manejado por el llamador
+        console.error("Error searching for token:", error);
+        throw error; // Throw the error to be handled by the caller
     }
 };
 
@@ -154,10 +161,10 @@ export const getTokenById = async (id: number) => {
 
     try {
         const res = await pool.query(query, [id]);
-        return res.rows.length > 0 ? res.rows[0] : null; // Retorna el token encontrado o null
+        return res.rows.length > 0 ? res.rows[0] : null; // Return the found token or null
     } catch (error) {
-        console.error("Error buscando token por ID:", error);
-        throw error; // Lanza el error para que sea manejado por el llamador
+        console.error("Error searching for token by ID:", error);
+        throw error; // Throw the error to be handled by the caller
     }
 };
 
@@ -169,10 +176,46 @@ export const getAllTokens = async () => {
 
     try {
         const res = await pool.query(query);
-        return res.rows; // Retorna todos los tokens
+        return res.rows; // Returns all tokens
     } catch (error) {
-        console.error("Error obteniendo todos los tokens:", error);
-        throw error; // Lanza el error para que sea manejado por el llamador
+        console.error("Error retrieving all tokens:", error);
+        throw error; // Throws the error to be handled by the caller
+    }
+};
+
+export const createSniper = async (userId, amount) => {
+    const query = 'INSERT INTO snipers (user_id, amount) VALUES ($1, $2) RETURNING id';
+
+    try {
+        const result = await pool.query(query, [userId, amount]);
+        return result.rows[0].id; // Returns the ID of the new sniper
+    } catch (error) {
+        console.error("Error creating sniper:", error);
+        throw error; // Throws the error to be handled by the caller
+    }
+};
+
+export const deleteSniperByUserId = async (userId) => {
+    const query = 'DELETE FROM snipers WHERE user_id = $1 RETURNING id';
+
+    try {
+        const result = await pool.query(query, [userId]);
+        return result.rows.length > 0 ? result.rows[0].id : null; // Returns the ID of the deleted sniper or null
+    } catch (error) {
+        console.error("Error deleting sniper:", error);
+        throw error; // Throws the error to be handled by the caller
+    }
+};
+
+export const getAllSnipers = async () => {
+    const query = 'SELECT * FROM snipers;';
+
+    try {
+        const res = await pool.query(query);
+        return res.rows; // Returns all snipers
+    } catch (error) {
+        console.error("Error retrieving all snipers:", error);
+        throw error; // Throws the error to be handled by the caller
     }
 };
 

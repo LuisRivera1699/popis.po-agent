@@ -58,3 +58,27 @@ export const UserSendBalanceSchema = z
     .strip()
     .describe("Schema for user ID and Ethereum wallet address to send balance");
 
+export const UserSnipeTokensSchema = z
+    .object({
+        userId: z.number().describe("The user's ID"),
+        balance: z.number().describe("The amount that the user will buy when a new token is created"),
+    })
+    .strip()
+    .describe("Schema for user ID and automatic token purchase details");
+
+export const BuyTokenSchema = z
+    .object({
+        userId: z.number().describe("The user's ID"),
+        buyAmount: z.number().describe("How much will the user buy"),
+        token: z.string().describe("The name, symbol or contract address that the user will buy"),
+    })
+    .strip()
+    .describe("Schema for user ID and token purchase details");
+
+export const SellTokenSchema = z
+    .object({
+        userId: z.number().describe("The user's ID"),
+        token: z.string().describe("The name, symbol or contract address that the user will sell"),
+    })
+    .strip()
+    .describe("Schema for user ID and token sell details");

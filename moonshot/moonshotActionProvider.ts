@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { CreateSchema, EvaluatorSchema, TokenSearchTermSchema, UserSchema, UserSendBalanceSchema } from "./schemas";
-import { Environment, MigrationDex, MintTokenCurveType, Moonshot, Network } from "@wen-moon-ser/moonshot-sdk-evm";
+import { BuyTokenSchema, CreateSchema, EvaluatorSchema, SellTokenSchema, TokenSearchTermSchema, UserSchema, UserSendBalanceSchema, UserSnipeTokensSchema } from "./schemas";
+import { Environment, FixedSide, MigrationDex, MintTokenCurveType, Moonshot, Network, Token } from "@wen-moon-ser/moonshot-sdk-evm";
 import { formatEther, JsonRpcProvider, parseEther, Transaction, Wallet } from "ethers";
 import { customActionProvider, EvmWalletProvider } from "@coinbase/agentkit";
-import { createToken, createWallet, findTokenByParameter, getWalletByUserId } from "../data/db";
+import { createSniper, createToken, createWallet, deleteSniperByUserId, findTokenByParameter, getAllSnipers, getWalletByUserId } from "../data/db";
 import { postTweet } from "../data/twitter";
+import { buyBulk } from "./buyBulk";
 
 export const moonshotActionProvider = customActionProvider([{
     name: "create_moonshot_token",
@@ -100,10 +101,17 @@ export const moonshotActionProvider = customActionProvider([{
                 console.log('created');
                 postTweet(`${args.tokenPost}`);
                 console.log('created tweet');
+
+                const snipers = await getAllSnipers();
+
+                if (snipers) {
+                    buyBulk(createdTokenAddress, snipers);
+                }
+
             } catch (e) {
                 return `Error creating token in Moonshot: ${e};`
             }
-            
+
 
             return `
                 Token was created succesfully. Now, you have the following:
@@ -249,7 +257,7 @@ export const moonshotActionProvider = customActionProvider([{
             console.error("Error fetching balance:", error);
             return `Tell the user that there was this error while trying to fetch the wallet balance: ${error}`;
         }
-    
+
         return `The balance in eth for his walletAddress ${walletAddress} is ${balance} $ETH`
     }
 }, {
@@ -334,5 +342,244 @@ export const moonshotActionProvider = customActionProvider([{
             return `Tell the user that he don't have any wallet and ask him to create it first.`;
         }
     }
-} 
+}, {
+    name: "buy_token",
+    description: `
+        This tool will buy a quantity of tokens with eth, with the user's wallet.
+
+        It takes the following input:
+        buyAmount: how much will the user buy
+        token: the name, symbol or contract address that the user will buy
+    `,
+    schema: BuyTokenSchema,
+    invoke: async (args: z.infer<typeof BuyTokenSchema>) => {
+        const wallets = await getWalletByUserId(args.userId);
+        const wallet = wallets[0];
+        const token = await findTokenByParameter(args.token);
+
+        if (wallet && token && args.buyAmount > 0) {
+
+            try {
+                const provider = new JsonRpcProvider(process.env.RPC_URL as string)
+                const privateKey = wallet.private_key;
+                const signer = new Wallet(privateKey, provider)
+
+                const moonshot = new Moonshot({
+                    signer,
+                    env: Environment.TESTNET
+                });
+
+                const moonshotToken = await Token.create({
+                    moonshot,
+                    provider,
+                    tokenAddress: token.contract_address
+                });
+
+                const collateralAmount = parseEther(args.buyAmount.toString());
+
+                const tokenAmountForTransaction = await moonshotToken.getTokenAmountByCollateral({
+                    collateralAmount,
+                    tradeDirection: 'BUY',
+                });
+
+                const slippageBps = 1000;
+
+                const buyTx = await moonshotToken.prepareTx({
+                    slippageBps,
+                    tokenAmount: tokenAmountForTransaction,
+                    collateralAmount: collateralAmount,
+                    tradeDirection: 'BUY',
+                    fixedSide: FixedSide.IN,
+                });
+
+                const walletAddress = await signer.getAddress();
+
+                const feeData = await provider.getFeeData();
+
+                const nonce = await provider.getTransactionCount(walletAddress, 'latest');
+
+                const enrichedBuyTx = {
+                    ...buyTx,
+                    gasPrice: feeData.gasPrice,
+                    nonce: nonce,
+                    from: walletAddress,
+                };
+
+                const buyTxGasLimit = await provider.estimateGas(enrichedBuyTx);
+
+                const buyTxResponse = await signer.sendTransaction({
+                    ...buyTx,
+                    gasLimit: buyTxGasLimit,
+                });
+
+                const buyTxReceipt = await buyTxResponse.wait();
+
+                if (buyTxReceipt?.status === 1) {
+                    const balance = await moonshotToken.balanceOf(walletAddress);
+
+                    return `Tell the user that he has succesfully bought the token and he now owns ${balance} of it.`
+                }
+            } catch (error) {
+                return `Tell the user that you got an error buying dude to: ${error}`
+            }
+
+        } else {
+            if (!wallet) {
+                return `Tell the user that he has no wallet to perform the operation.`
+            } else if (!token) {
+                return `Tell the user that you couldn't find the token he's trying to buy`
+            } else if (args.buyAmount <= 0) {
+                return `Tell the user that the buy amount is not valid`
+            }
+        }
+    }
+}, {
+    name: "sell_token",
+    description: `
+        This tool will sell a quantity of tokens with eth, from the user's wallet.
+
+        It takes the following input:
+        token: the name, symbol or contract address that the user will sell
+    `,
+    schema: SellTokenSchema,
+    invoke: async (args: z.infer<typeof SellTokenSchema>) => {
+        const wallets = await getWalletByUserId(args.userId);
+        const wallet = wallets[0];
+        const token = await findTokenByParameter(args.token);
+
+        if (wallet && token) {
+
+            try {
+                const provider = new JsonRpcProvider(process.env.RPC_URL as string)
+                const privateKey = wallet.private_key;
+                const signer = new Wallet(privateKey, provider)
+
+                const walletAddress = await signer.getAddress();
+
+
+                const moonshot = new Moonshot({
+                    signer,
+                    env: Environment.TESTNET
+                });
+
+                const moonshotToken = await Token.create({
+                    moonshot,
+                    provider,
+                    tokenAddress: token.contract_address
+                });
+
+                const tokenAmount = await moonshotToken.balanceOf(walletAddress);
+
+                if (tokenAmount <= 0) {
+                    return `Tell the user that you cannot sell tokens if he has 0 balance of it.`
+                }
+
+                await moonshotToken.approveForMoonshotSell(tokenAmount);
+
+                const collateralAmountForTransaction =
+                    await moonshotToken.getCollateralAmountByTokens({
+                        tokenAmount,
+                        tradeDirection: 'BUY',
+                    });
+
+                const slippageBps = 1000;
+
+                const sellTx = await moonshotToken.prepareTx({
+                    slippageBps,
+                    tokenAmount,
+                    collateralAmount: collateralAmountForTransaction,
+                    tradeDirection: 'SELL',
+                    fixedSide: FixedSide.IN,
+                });
+
+                const feeData = await provider.getFeeData();
+
+                let nonce = await provider.getTransactionCount(walletAddress, 'latest');
+                let attempts = 0;
+
+                while (attempts < 5) {
+                    try {
+                        const enrichedSellTx = {
+                            ...sellTx,
+                            gasPrice: feeData.gasPrice,
+                            nonce,
+                            from: walletAddress,
+                        };
+
+                        const sellTxGasLimit = await provider.estimateGas(enrichedSellTx);
+
+                        const sellTxResponse = await signer.sendTransaction({
+                            ...enrichedSellTx,
+                            gasLimit: sellTxGasLimit,
+                        });
+
+                        const sellTxReceipt = await sellTxResponse.wait();
+
+                        if (sellTxReceipt?.status === 1) {
+                            return `Tell the user that he has succesfully sold the token.`
+                        }
+                    } catch (error) {
+                        if ((error as Error).message.includes("nonce too low")) {
+                            nonce = await provider.getTransactionCount(walletAddress, 'latest'); // Update nonce
+                            attempts++;
+                            if (attempts === 5) {
+                                throw error
+                            }
+                        } else {
+                            throw error; // Rethrow if it's a different error
+                        }
+                    }
+                }
+
+            } catch (error) {
+                return `Tell the user that you got an error selling dude to: ${error}`
+            }
+
+        } else {
+            if (!wallet) {
+                return `Tell the user that he has no wallet to perform the operation.`
+            } else if (!token) {
+                return `Tell the user that you couldn't find the token he's trying to sell`
+            }
+        }
+    }
+}, {
+    name: "snipe_tokens",
+    description: `
+        This tool will add the user to a list of automatic buys when the agent creates tokens and set his desired amount to buy.
+
+        It takes the following input:
+        balance: how much balance in eth the user wants to buy for every token that the agent has created
+    `,
+    schema: UserSnipeTokensSchema,
+    invoke: async (args: z.infer<typeof UserSnipeTokensSchema>) => {
+        const wallets = await getWalletByUserId(args.userId);
+        const wallet = wallets[0];
+
+        if (wallet) {
+            if (args.balance > 0) {
+                await createSniper(args.userId, args.balance);
+                return `Tell user that you have set him to buy automatically all tokens that you create. He has to be aware of the agent's twitter for news.`
+            } else {
+                return `Tell user that you cannot make automatic buys with 0 balance`
+            }
+        } else {
+            return `Tell the user that he don't have any wallet and ask him to create it first.`;
+        }
+    }
+}, {
+    name: "stop_sniping",
+    description: `
+        This tool will remove the user from the list of automatic buys when the agent creates tokens.
+    `,
+    schema: UserSchema,
+    invoke: async (args: z.infer<typeof UserSchema>) => {
+        try {
+            deleteSniperByUserId(args.userId);
+            return `Tell the user that he has been succesfully removed from the snipers list.`
+        } catch (error) {
+            return `Tell the user that an error happened during the deletion because of ${error}`
+        }
+    }
+}
 ])
