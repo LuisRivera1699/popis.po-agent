@@ -1,63 +1,100 @@
-# CDP AgentKit LangChain Extension Examples - Chatbot Typescript
+# pochi.po - The AI Meme Token Hunter 🚀
 
-This example demonstrates an agent setup as a terminal style chatbot with access to the full set of CDP AgentKit actions.
+## What is pochi.po? 🤖
 
-## Ask the chatbot to engage in the Web3 ecosystem!
+The blockchain world is living the **meme phenomenon**—every viral event turns into a meme, and people create tokens around them. If a meme gains traction, the token explodes, and some make a fortune. But...
 
-- "Transfer a portion of your ETH to a random address"
-- "What is the price of BTC?"
-- "Deploy an NFT that will go super viral!"
-- "Deploy an ERC-20 token with total supply 1 billion"
+- Not all meme tokens succeed—many are **rug pulls** or just don't take off.
+- As soon as a meme goes viral, **1000 copycat tokens** appear, confusing buyers.
+- Finding the next meme requires **being glued to Twitter 24/7**, which is unrealistic for most.
 
-## Prerequisites
+**Enter pochi.po**, an AI agent inspired by the nickname of its creator's girlfriend. pochi.po **scrapes Twitter, detects potential memes, and automatically creates meme tokens** before anyone else.
 
-### Checking Node Version
+---
 
-Before using the example, ensure that you have the correct version of Node.js installed. The example requires Node.js 18 or higher. You can check your Node version by running:
+## How It Works 🛠️
 
-```bash
-node --version
-```
+1. **Scraping Twitter** 🕵️‍♂️ - pochi.po constantly monitors **nitter.net** for new tweets.
+2. **Meme Detection** 🔍 - Uses AI (Claude by Anthropic) to analyze if a tweet is meme-worthy.
+3. **Token Creation** 🎰 - If a tweet qualifies, pochi.po **creates a token on Moonshot**, buys a percentage, and tweets about it.
+4. **Engagement & Automation** 🤖 - Users can interact with pochi.po via chat to:
+   - Check token details & tweets.
+   - Create a wallet (custodial for now, **MPC coming soon**).
+   - Buy/sell tokens created by pochi.po.
+   - Auto-buy every new pochi.po token (**sniping mode**!).
 
-If you don't have the correct version, you can install it using [nvm](https://github.com/nvm-sh/nvm):
+---
 
-```bash
-nvm install node
-```
+## System Architecture 🏗️
 
-This will automatically install and use the latest version of Node.
+![Architecture](https://pbs.twimg.com/media/GjXBIZGXkAAX5zk?format=jpg&name=large)
 
-### API Keys
+### Components:
 
-You'll need the following API keys:
-- [CDP API Key](https://portal.cdp.coinbase.com/access/api)
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+- **Scraper** 📡
+  - Built with Python, Selenium, and BeautifulSoup.
+  - Scrapes tweets from **nitter.net** and stores them in an AWS **PostgreSQL DB**.
+  - Evaluates tweets using the pochi.po AI agent.
 
-Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
+- **Autonome (pochi.po Agent)** 🧠
+  - Hosted on **Autonome**, powered by **Coinbase AgentKit** and **Anthropic Claude**.
+  - Handles user interactions and meme token creation.
+  - Equipped with powerful tools:
+    - `create_moonshot_token` → Deploys tokens, buys for snipers, and tweets.
+    - `tweet_evaluator` → Analyzes meme potential, explains why, and saves it.
+    - `create_user_wallet` → Creates a secure custodial wallet.
+    - `get_balance` → Fetches user wallet balance.
+    - `search_token` → Searches tokens by name, symbol, or contract address.
+    - `get_private_key` → Retrieves the user’s stored private key.
+    - `send_eth` → Sends ETH to another wallet.
+    - `buy_token` → Buys pochi.po-created tokens.
+    - `sell_token` → Sells pochi.po-created tokens.
+    - `snipe_tokens` → Enables auto-buying of new pochi.po tokens.
+    - `stop_sniping` → Stops auto-buying.
 
-- "CDP_API_KEY_NAME"
-- "CDP_API_KEY_PRIVATE_KEY"
-- "OPENAI_API_KEY"
+- **Blockchain (Base Sepolia + Moonshot)** 🔗
+  - All tokens are deployed on **Base Sepolia** via **Moonshot Protocol**.
+  - Transactions are stored and accessible in pochi.po’s database.
 
-## Running the example
+- **Frontend (pochipo.xyz)** 🎨
+  - Built with **Vite.js**, hosted on **Vercel**.
+  - Displays all tokens created by pochi.po and their associated tweets.
+  - Integrates chat-based interaction with the pochi.po agent.
 
-From the root directory, run:
+- **Twitter Bot (@PochiPo1589473)** 🐦
+  - Publishes new tokens **instantly** when created.
+  - Engages with users and provides real-time updates.
 
-```bash
-npm install
-npm run build
-```
+---
 
-This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-langchain` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
+## Get Started 🚀
 
-Now from the `typescript/examples/langchain-cdp-chatbot` directory, run:
+### Try pochi.po:
+- 🌐 **Web App:** [pochipo.xyz](https://pochipo.xyz)
+- 🤖 **AI Agent (Autonome):** [Live Deployment](
+https://autonome.alt.technology/pochi-po-ljtoie)
+- 🐦 **Twitter:** [@PochiPo1589473](https://x.com/PochiPo1589473)
 
-```bash
-npm start
-```
+### How to Use:
+1. **Browse the dashboard** for the latest meme tokens.
+2. **Ask pochi.po** about a token’s details in the chat.
+3. **Create a wallet** and manage funds.
+4. **Enable sniping mode** and let pochi.po auto-buy new tokens!
 
-Select "1. chat mode" and start telling your Agent to do things onchain!
+---
 
-## License
+## Future Plans 🔮
+- ✅ **MPC Wallets** → Fully non-custodial wallets using Coinbase’s MPC tech.
+- ✅ **More refined meme detection** → Integrating broader sentiment analysis.
+- ✅ **Multi-chain deployment** → Expanding beyond Base Sepolia.
 
-Apache-2.0
+---
+
+## Contributing 🛠️
+PRs welcome! If you have cool ideas, feel free to open an issue or hit us up on Twitter.
+
+---
+
+## License 📜
+MIT - Do whatever you want, just don’t rug. 😉
+
